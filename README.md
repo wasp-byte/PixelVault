@@ -1,4 +1,4 @@
-<img src="pixelvault.ico" align="right" />
+<img src="pixelvault.png" align="right"/>
 
 # PixelVault
 
