@@ -21,6 +21,7 @@ root.resizable(False, False)
 
 entry = ctk.StringVar(root)
 path = []
+thr_stop = False
 def choose_file():
     global path
     if switch_path.get() == "on":
@@ -84,7 +85,7 @@ def gen():
     global path
     global gif_thr
     if len(path) == 0 or entry.get() == "":
-        alert("Error", "choose file or dic")
+        alert("Error", "choose picture")
         return
     gif_thr = threading.Thread(target=loaded)
     gif_thr.start()
@@ -93,10 +94,14 @@ def gen():
     
 
 def loaded():
+    global thr_stop
     while True:
+        if thr_stop:
+            thr_stop = False
+            break
         img = Image.open("loading.gif")
         lbl = ctk.CTkLabel(root, text="")
-        lbl.place(x=30,y=170)
+        lbl.place(x=30,y=145)
     
         for img in ImageSequence.Iterator(img):
             img = ctk.CTkImage(dark_image=img, size=(200, 60))
@@ -105,14 +110,13 @@ def loaded():
             time.sleep(0.04)
 def deoren_thread():
     global path
-    global gif_thr
+    global thr_stop
     for i in path:
         deoren(entry.get(), i, switch_var.get() == "on")
     path = []
     label.configure(text = "")
     alert('Complete', "File change", 'info')
-    gif_thr.exit()
-
+    thr_stop = True
 
 root.columnconfigure(0, weight=1)
 
