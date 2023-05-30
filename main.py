@@ -2,6 +2,7 @@ import tkinter
 from tkinter import filedialog
 from tkinter import messagebox
 import customtkinter as ctk
+import glob
 
 ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("green")
@@ -15,30 +16,30 @@ root.attributes("-topmost", True)
 root.resizable(False, False)
 
 entry = ctk.StringVar(root)
-
+path = []
 def choose_file():
-    progressbar.set(0)
-    pw = entry.get()
-    if len(pw) == 0:
-        alert("Password not given", "Are you serious?")
+    global path
+    if switch_path.get() == "on":
+        path = [i for i in filedialog.askopenfilenames(title='Open a file', filetypes=(('PNG', '*.png'),('All files', '*.*')))]
+    else:
+        path.append(filedialog.askdirectory(title='Open a dir'))
+        path = dirpic(path)
+        print(path)
+    if len(path) == 0:
         return
-    path = filedialog.askopenfilename(title='Open a file', filetypes=(('PNG', '*.png'),('All files', '*.*')))
-    if path == "":
-        return
-    deoren(pw, path, switch_var.get() == "on")
+    label.configure(text = path[0])
 
 def switch_event():
     s_deoren.configure(text = "Encode" if switch_var.get() == "on" else "Decode")
+    btn_deoren.configure(text = "Encode" if switch_var.get() == "on" else "Decode")
 
+def switch_eventp():
+    s_path.configure(text = "File" if switch_path.get() == "on" else "Folder")
 
-# changing entry visibility
-def toggle_password_visibility():
-    if e_password.cget('show') == '*':
-        e_password.configure(show='')
-        show_password_button.configure(image=hide_img)
-    else:
-        e_password.configure(show='*')
-        show_password_button.configure(image=show_img)
+def bind_e(e):
+    e_password.configure(show='')
+def bind_l(e):
+    e_password.configure(show='*')
 
 
 # showing alert when called sth
@@ -70,23 +71,56 @@ def deoren(pw: str, path: str, encode):
     
     image.save(path, format="png")
 
+def dirpic(direc):
+    direc = str(direc[0])
+    return glob.glob(f"{direc}*/*.png") 
+
+
+
+def gen():
+    global path
+    for i in path:
+        deoren(entry.get(), i, True if switch_var.get() == "on" else False)
+    path = []
+    label.configure(text = "")
+    alert('Complete', "File change", 'info')
+
+
+
+root.columnconfigure(0, weight=1)
+
+
+
+
+btn_file = ctk.CTkButton(root, text="choose", command=choose_file).grid(row=0, column=0, sticky = 'w', pady = 20, padx=20)
+
+
+label = ctk.CTkLabel(root, text="CTkLabel", fg_color="transparent")
+label.grid(row=0, column=0,  rowspan=2, pady=20)
+
+
+switch_path = ctk.StringVar(value="on")
+s_path = ctk.CTkSwitch(root, text="File", command=switch_eventp, variable=switch_path, onvalue="on", offvalue="off")
+s_path.grid(row=1, column=0, sticky = 'w', padx=40)
+
+
+e_password = ctk.CTkEntry(root, placeholder_text="Enter Password", textvariable=entry, show="*", width=500)
+e_password.grid(row=2, column=0, sticky = 'w', pady = 40, padx=20)
+
 switch_var = ctk.StringVar(value="on")
 s_deoren = ctk.CTkSwitch(root, text="Encode", command=switch_event, variable=switch_var, onvalue="on", offvalue="off")
-s_deoren.pack(side='right', anchor='ne', pady=40)
+s_deoren.grid(row=2, column=1, sticky = 'e')
 
-check_var= ctk.StringVar(value="on")
-show_img = tkinter.PhotoImage(file="selected.png").subsample(15)
-hide_img = tkinter.PhotoImage(file="unselected.png").subsample(15)
-show_password_button = tkinter.Button(root, image=show_img, command=toggle_password_visibility, highlightthickness = 0, bd = 0)
-show_password_button.pack(side='right', anchor='ne', pady=43)
 
-e_password = ctk.CTkEntry(root, placeholder_text="Enter Password", textvariable=entry, show="*", width=569)
-e_password.pack(pady=40)
-
-btn_file = ctk.CTkButton(root, text="choose", command=choose_file).pack()
-
-progressbar = ctk.CTkProgressBar(root, orientation="horizontal", width=700)
-progressbar.pack(pady=100)
+progressbar = ctk.CTkProgressBar(root, orientation="horizontal", width=777)
+progressbar.grid(row=3, columnspan=2, sticky = 'sw', pady=30)
 progressbar.set(0)
+
+btn_deoren = ctk.CTkButton(root, text="Encode", command=gen)
+btn_deoren.grid(row=4, columnspan=2, sticky='s', pady=20)
+
+e_password.bind("<Enter>", bind_e)
+e_password.bind("<Leave>", bind_l)
+
 
 root.mainloop()
