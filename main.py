@@ -3,6 +3,10 @@ from tkinter import filedialog
 from tkinter import messagebox
 import customtkinter as ctk
 import glob
+from PIL import Image, ImageTk, ImageSequence
+import random
+import time
+import threading
 
 ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("green")
@@ -50,14 +54,13 @@ def alert(title, message, kind='warning'):
 
 
 def deoren(pw: str, path: str, encode):
-    from PIL import Image
-    import random
 
     image = Image.open(path)
     width, height = image.size
     pixel_map = image.load()
     random.seed(pw)
 
+    progressbar.set(0)
     for i in range(width):
         progressbar.set((i+1) / width)
         for j in range(height):
@@ -73,51 +76,73 @@ def deoren(pw: str, path: str, encode):
 
 def dirpic(direc):
     direc = str(direc[0])
-    return glob.glob(f"{direc}*/*.png") 
+    return glob.glob(f"{direc}*/*.png")
 
 
 
 def gen():
     global path
+    global gif_thr
+    if len(path) == 0 or entry.get() == "":
+        alert("Error", "choose file or dic")
+        return
+    gif_thr = threading.Thread(target=loaded)
+    gif_thr.start()
+    deoren_thr = threading.Thread(target=deoren_thread)
+    deoren_thr.start()
+    
+
+def loaded():
+    while True:
+        img = Image.open("loading.gif")
+        lbl = ctk.CTkLabel(root, text="")
+        lbl.place(x=30,y=170)
+    
+        for img in ImageSequence.Iterator(img):
+            img = ctk.CTkImage(dark_image=img, size=(200, 60))
+            lbl.configure(image = img)
+            root.update()
+            time.sleep(0.04)
+def deoren_thread():
+    global path
+    global gif_thr
     for i in path:
-        deoren(entry.get(), i, True if switch_var.get() == "on" else False)
+        deoren(entry.get(), i, switch_var.get() == "on")
     path = []
     label.configure(text = "")
     alert('Complete', "File change", 'info')
-
+    gif_thr.exit()
 
 
 root.columnconfigure(0, weight=1)
 
 
 
-
-btn_file = ctk.CTkButton(root, text="choose", command=choose_file).grid(row=0, column=0, sticky = 'w', pady = 20, padx=20)
-
-
-label = ctk.CTkLabel(root, text="CTkLabel", fg_color="transparent")
-label.grid(row=0, column=0,  rowspan=2, pady=20)
-
+btn_file = ctk.CTkButton(root, text="choose", command=choose_file).grid(row=0, column=0, sticky = 'w', pady=(20, 0), padx=20)
 
 switch_path = ctk.StringVar(value="on")
 s_path = ctk.CTkSwitch(root, text="File", command=switch_eventp, variable=switch_path, onvalue="on", offvalue="off")
-s_path.grid(row=1, column=0, sticky = 'w', padx=40)
+s_path.grid(row=0, column=0, sticky='s')
+
+label = ctk.CTkLabel(root, text='', fg_color="transparent")
+label.grid(row=1, column=0, sticky='w', padx=20)
 
 
 e_password = ctk.CTkEntry(root, placeholder_text="Enter Password", textvariable=entry, show="*", width=500)
-e_password.grid(row=2, column=0, sticky = 'w', pady = 40, padx=20)
+e_password.grid(row=3, column=0, sticky = 'w', pady = 40, padx=20)
 
 switch_var = ctk.StringVar(value="on")
 s_deoren = ctk.CTkSwitch(root, text="Encode", command=switch_event, variable=switch_var, onvalue="on", offvalue="off")
-s_deoren.grid(row=2, column=1, sticky = 'e')
-
+s_deoren.grid(row=3, column=1, sticky = 'e')
 
 progressbar = ctk.CTkProgressBar(root, orientation="horizontal", width=777)
-progressbar.grid(row=3, columnspan=2, sticky = 'sw', pady=30)
+progressbar.grid(row=4, columnspan=2, sticky = 'sw', pady=30)
 progressbar.set(0)
 
 btn_deoren = ctk.CTkButton(root, text="Encode", command=gen)
-btn_deoren.grid(row=4, columnspan=2, sticky='s', pady=20)
+btn_deoren.grid(row=5, columnspan=2, sticky='s', pady=20)
+
+
 
 e_password.bind("<Enter>", bind_e)
 e_password.bind("<Leave>", bind_l)
