@@ -15,7 +15,7 @@ ctk.set_default_color_theme("green")
 root = ctk.CTk()
 root.title("PixelVault")
 root.geometry("550x400")
-root.iconbitmap("pixelvault.ico")
+root.iconphoto(False, tkinter.PhotoImage(file='pixelvault.png'))
 root.attributes("-topmost", True)
 root.resizable(False, False)
 
